@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Discord Rare Finder PRO</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080910;color:#fff;font-family:Arial;padding:18px 12px}
+.container{max-width:900px;margin:auto}
+header{text-align:center;padding:25px 0}
+.logo{font-size:32px;font-weight:900;background:linear-gradient(90deg,#a78bfa,#38bdf8);background-clip:text;color:transparent}
+.sub{color:#888ba4;font-size:12px;margin-top:9px}
+.panel{background:#121321;border:1px solid #292943;border-radius:15px;padding:17px;margin-bottom:15px}
+h3{font-size:15px;margin:0 0 16px}
+label{display:block;color:#999bb1;font-size:12px;margin-bottom:7px}
+input,select{width:100%;background:#090a14;border:1px solid #34344c;border-radius:9px;padding:12px;color:white;outline:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+button{border:0;border-radius:9px;padding:11px;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4}
+.primary{background:linear-gradient(90deg,#8057f5,#4c7df5);width:100%;margin-top:17px}
+.stop{background:#a93651}
+.secondary{background:#292943}
+.success{background:#176b4c}
+.fail{background:#8e3040}
+.pending{background:#66501b}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:15px}
+.stat{background:#121321;border:1px solid #292943;border-radius:11px;padding:13px 5px;text-align:center}
+.stat strong{font-size:21px;display:block;color:#a78bfa}
+.stat span{font-size:10px;color:#999bb1}
+.progress{height:7px;background:#292943;border-radius:10px;overflow:hidden;margin-top:12px}
+.bar{height:100%;width:0;background:#9873ff;transition:width .2s}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.toolbar button{font-size:11px}
+.results{display:flex;flex-direction:column;gap:8px}
+.item{background:#191a2b;border:1px solid #30314b;padding:11px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.username{font-weight:bold;letter-spacing:1px;overflow-wrap:anywhere}
+.status{font-size:10px;margin-top:5px;color:#eabf55}
+.status.ok{color:#36d99a}
+.status.bad{color:#ff7185}
+.actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.actions button{font-size:10px;padding:8px}
+.note{font-size:12px;line-height:1.7;color:#9293a8}
+.empty{text-align:center;padding:25px;color:#77798e}
+#running{color:#eabf55;font-size:12px}
+.footer{text-align:center;color:#55566b;font-size:11px;padding:20px}
+@media(max-width:500px){
+ .logo{font-size:25px}
+ .stats{grid-template-columns:repeat(2,1fr)}
+ .item{align-items:flex-start}
+ .actions button{padding:7px 6px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+ <div class="logo">RARE FINDER PRO</div>
+ <div class="sub">DISCORD USERNAME GENERATOR</div>
+ <p id="running">● ĐANG CHỜ BẮT ĐẦU</p>
+</header>
+
+<div class="panel">
+ <h3>⚙ CẤU HÌNH TÌM KIẾM</h3>
+
+ <div class="grid">
+  <div>
+   <label>Độ dài tên</label>
+   <select id="len">
+    <option value="3">3 ký tự</option>
+    <option value="4">4 ký tự</option>
+    <option value="5" selected>5 ký tự</option>
+    <option value="6">6 ký tự</option>
+    <option value="7">7 ký tự</option>
+    <option value="8">8 ký tự</option>
+   </select>
+  </div>
+  <div>
+   <label>Kiểu tên</label>
+   <select id="mode">
+    <option value="mix">Chữ + số</option>
+    <option value="letter">Chỉ chữ</option>
+    <option value="underscore">Có dấu _</option>
+    <option value="rare">Siêu ngẫu nhiên</option>
+   </select>
+  </div>
+  <div>
+   <label>Bắt đầu bằng</label>
+   <input id="prefix" maxlength="5" placeholder="VD: x, z, q">
+  </div>
+  <div>
+   <label>Tốc độ tạo</label>
+   <select id="speed">
+    <option value="60">Khoảng 1000 tên/phút</option>
+    <option value="120">Khoảng 500 tên/phút</option>
+    <option value="300">Khoảng 200 tên/phút</option>
+   </select>
+  </div>
+ </div>
+
+ <button class="primary" id="start" onclick="startScan()">▶ BẮT ĐẦU</button>
+ <button class="primary stop" id="stop" onclick="stopScan()" style="display:none">■ DỪNG TÌM KIẾM</button>
+
+ <div class="progress"><div class="bar" id="bar"></div></div>
+ <p class="note" id="progressText">Chưa bắt đầu tạo username.</p>
+</div>
+
+<div class="stats">
+ <div class="stat"><strong id="total">0</strong><span>ĐÃ TẠO</span></div>
+ <div class="stat"><strong id="ok">0</strong><span>THÀNH CÔNG</span></div>
+ <div class="stat"><strong id="bad">0</strong><span>THẤT BẠI</span></div>
+ <div class="stat"><strong id="pending">0</strong><span>CHỜ XÁC MINH</span></div>
+</div>
+
+<div class="panel">
+ <h3>✦ DANH SÁCH USERNAME</h3>
+ <div class="toolbar">
+  <button class="secondary" onclick="filterList('all')">TẤT CẢ</button>
+  <button class="success" onclick="filterList('ok')">THÀNH CÔNG</button>
+  <button class="fail" onclick="filterList('bad')">THẤT BẠI</button>
+  <button class="pending" onclick="filterList('pending')">CHỜ</button>
+ </div>
+ <div class="toolbar">
+  <button class="secondary" onclick="copyStatus('ok')">COPY THÀNH CÔNG</button>
+  <button class="secondary" onclick="copyStatus('pending')">COPY CHỜ</button>
+  <button class="secondary" onclick="exportList()">XUẤT TXT</button>
+ </div>
+ <div id="results" class="results">
+  <div class="empty">Nhấn BẮT ĐẦU để tạo username</div>
+ </div>
+</div>
+
+<div class="panel">
+ <h3>♡ ĐÃ LƯU</h3>
+ <div id="saved" class="results">
+  <div class="empty">Chưa có tên yêu thích</div>
+ </div>
+</div>
+
+<div class="panel">
+ <h3>📌 HƯỚNG DẪN</h3>
+ <p class="note">
+  • Thành công: bạn xác nhận tên còn sử dụng được.<br>
+  • Thất bại: bạn xác nhận tên đã có người sử dụng.<br>
+  • Chờ xác minh: tên mới được tạo, chưa kiểm tra.<br>
+  • Nút lưu giúp giữ lại username yêu thích.<br>
+  • Công cụ này tạo và quản lý gợi ý trên trình duyệt,
+  không tự xác nhận tình trạng username trên Discord.
+ </p>
+</div>
+
+<div class="footer">RARE FINDER PRO · VERSION 2.0</div>
+</div>
+
+<script>
+let names = [];
+let favorites = new Set();
+let timer = null;
+let filter = 'all';
+let generated = 0;
+let maxDisplay = 2000;
+
+const chars = 'abcdefghijklmnopqrstuvwxyz';
+const nums = '0123456789';
+
+function randomChar(s){
+ return s[Math.floor(Math.random()*s.length)];
+}
+
+function createName(){
+ let length = Number(document.getElementById('len').value);
+ let mode = document.getElementById('mode').value;
+ let prefix = document.getElementById('prefix').value
+  .toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,length);
+
+ let result = prefix;
+
+ while(result.length < length){
+  let position = result.length;
+  let c;
+
+  if(mode === 'letter'){
+   c = randomChar(chars);
+  }else if(mode === 'underscore'){
+   c = randomChar(position > 0 ? chars+nums+'_' : chars+nums);
+  }else if(mode === 'rare'){
+   c = randomChar(chars+nums);
+   if(Math.random()<0.15 && position>0) c='_';
+  }else{
+   c = randomChar(chars+nums);
+  }
+
+  if(c === '_' && (result.endsWith('_') || position===0)) c='x';
+  result += c;
+ }
+
+ return result;
+}
+
+function startScan(){
+ if(timer) return;
+
+ document.getElementById('start').style.display='none';
+ document.getElementById('stop').style.display='block';
+ document.getElementById('running').textContent='● ĐANG TẠO USERNAME...';
+
+ let speed = Number(document.getElementById('speed').value);
+
+ timer = setInterval(()=>{
+  for(let i=0;i<1;i++){
+   let name=createName();
+
+   if(names.some(x=>x.name===name)) continue;
+
+   names.unshift({
+    name:name,
+    status:'pending',
+    time:new Date().toLocaleTimeString()
+   });
+
+   generated++;
+  }
+
+  if(names.length>maxDisplay) names.length=maxDisplay;
+
+  update();
+ },speed);
+}
+
+function stopScan(){
+ clearInterval(timer);
+ timer=null;
+ document.getElementById('start').style.display='block';
+ document.getElementById('stop').style.display='none';
+ document.getElementById('running').textContent='● ĐÃ DỪNG';
+}
+
+function setStatus(name,status){
+ let item=names.find(x=>x.name===name);
+ if(!item)return;
+ item.status=status;
+ update();
+}
+
+function toggleSave(name){
+ if(favorites.has(name))favorites.delete(name);
+ else favorites.add(name);
+ update();
+}
+
+function filterList(value){
+ filter=value;
+ update();
+}
+
+function update(){
+ let ok=names.filter(x=>x.status==='ok').length;
+ let bad=names.filter(x=>x.status==='bad').length;
+ let pending=names.filter(x=>x.status==='pending').length;
+
+ document.getElementById('total').textContent=generated;
+ document.getElementById('ok').textContent=ok;
+ document.getElementById('bad').textContent=bad;
+ document.getElementById('pending').textContent=pending;
+ document.getElementById('favorites').textContent=favorites.size;
+
+ document.getElementById('progressText').textContent=
+ 'Đã tạo '+generated.toLocaleString('vi-VN')+
+ ' username · Tình trạng cần xác minh thủ công.';
+
+ document.getElementById('bar').style.width=
+ (generated%100)+'%';
+
+ let list=filter==='all'?names:names.filter(x=>x.status===filter);
+ let html=list.slice(0,100).map(x=>{
+  let label=x.status==='ok'?'THÀNH CÔNG':
+   x.status==='bad'?'THẤT BẠI':'CHỜ XÁC MINH';
+  let cls=x.status==='ok'?'ok':x.status==='bad'?'bad':'';
+
+  return `<div class="item">
+   <div>
+    <div class="username">${x.name}</div>
+    <div class="status ${cls}">${label}</div>
+   </div>
+   <div class="actions">
+    <button class="success" onclick="setStatus('${x.name}','ok')">✓</button>
+    <button class="fail" onclick="setStatus('${x.name}','bad')">✕</button>
+    <button class="secondary" onclick="copyOne('${x.name}')">COPY</button>
+    <button class="secondary" onclick="toggleSave('${x.name}')">${favorites.has(x.name)?'♥':'♡'}</button>
+   </div>
+  </div>`;
+ }).join('');
+
+ document.getElementById('results').innerHTML=
+ html||'<div class="empty">Không có username</div>';
+
+ document.getElementById('saved').innerHTML=
+ [...favorites].map(name=>
+ `<div class="item">
+  <span class="username">${name}</span>
+  <div class="actions">
+   <button class="copy" onclick="copyOne('${name}')">COPY</button>
+   <button class="fail" onclick="toggleSave('${name}')">XÓA</button>
+  </div>
+ </div>`).join('')||'<div class="empty">Chưa có tên yêu thích</div>';
+}
+
+function copyOne(name){
+ navigator.clipboard.writeText(name);
+}
+
+function copyStatus(status){
+ let text=names.filter(x=>x.status===status).map(x=>x.name).join('\n');
+ if(text)navigator.clipboard.writeText(text);
+}
+
+function exportList(){
+ let text=names.map(x=>x.name+' | '+x.status).join('\n');
+ let blob=new Blob([text],{type:'text/plain'});
+ let a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='discord-usernames.txt';
+ a.click();
+ URL.revokeObjectURL(a.href);
+}
+
+</script>
+</body>
+</html>
